@@ -1,5 +1,4 @@
 #!/usr/bin/python
-
 # This is a simple echo bot using the decorator mechanism.
 # It echoes any incoming text messages.
 
@@ -12,12 +11,13 @@ from datetime import datetime
 import threading
 import mysql.connector
 from DDL import data
+import config
 
-API_TOKEN = '7777678613:AAHVzcse6EpqUB5VKPTzesnfibw99yQQjZw'
+API_TOKEN = config.API_TOKEN
 
 bot = telebot.TeleBot(API_TOKEN)
 
-user_steps = dict() 
+user_steps = dict()
 user_data = dict() 
 user_answers = dict() 
 
@@ -25,7 +25,7 @@ hide_keybored = ReplyKeyboardRemove()
 
 config ={
     'user'      :   'root',
-    'password'  :   'paswordn',
+    'password'  :   config.password,
     'host'      :   'localhost',
     'database'  :   'tel_bot'
 }
@@ -63,6 +63,8 @@ def command_help_handler(message):
         text += f'/{command}: {desc}\n'
     bot.send_message(cid, text)
 
+
+
 @bot.message_handler(commands=['profile'])
 def command_profile_handler(message):
     cid = message.chat.id
@@ -99,7 +101,7 @@ def command_profile_handler(message):
     
     bot.send_message(cid, profile_message, parse_mode='Markdown')
 
-def get_questions_from_db(language, level, cid):
+def get_questions_from_db(language, level):
     try:
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
@@ -107,7 +109,7 @@ def get_questions_from_db(language, level, cid):
         questions = cursor.fetchall()
         return questions
     except mysql.connector.Error as err:
-        bot.send_message(cid, f"خطای اتصال به پایگاه داده: {err}")
+        print(f"خطای اتصال به پایگاه داده: {err}")
         return []
     finally:
         if cursor is not None:
@@ -115,21 +117,61 @@ def get_questions_from_db(language, level, cid):
         if conn is not None:
             conn.close()
 
+def send_question(cid):
+    if cid in user_data and 'current_question' in user_data[cid]:
+        language = user_data[cid].get('زبان برنامه نویسی')
+        current_level = user_data[cid].get('سطح')
+        questions = get_questions_from_db(language, current_level)
 
-def insert_user_answer(cid, question_idx, answer):
+        question_idx = user_data[cid]['current_question']
+        
+        if question_idx >= len(questions):
+            bot.send_message(cid, 'شما همه سوالات را پاسخ داده‌اید! ارزیابی سطح...')
+            evaluate_level(cid)
+            return
+        
+        question_file_id, _ = questions[question_idx]
+        question_caption = f'سوال {question_idx + 1}\n گزینه مورد نظر را انتخاب کنید:'
+
+        options = [
+            InlineKeyboardButton('A', callback_data=f'answer_{question_idx}_A'),
+            InlineKeyboardButton('B', callback_data=f'answer_{question_idx}_B'),
+            InlineKeyboardButton('C', callback_data=f'answer_{question_idx}_C'),
+            InlineKeyboardButton('D', callback_data=f'answer_{question_idx}_D')
+        ]
+        markup = InlineKeyboardMarkup([options])
+
+        bot.send_photo(cid, question_file_id, caption=question_caption, reply_markup=markup)
+        user_data[cid]['current_question'] += 1
+
+    else:
+        bot.send_message(cid, 'خطا: کاربر شناسایی نشد.')
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith('answer_'))
+def handle_answer(call):
+    cid = call.message.chat.id
+    question_idx = int(call.data.split('_')[1]) 
+    answer = call.data.split('_')[2]  
+    user_answers[cid].append(answer)
+    insert_user_answer(cid, question_idx, answer)
+
+    send_question(cid)
+
+def insert_user_answer(language, level):
     try:
         conn = mysql.connector.connect(**config)
         cursor = conn.cursor()
-        cursor.execute("INSERT INTO `test` (user_id, question_id, user_answer, Date) VALUES (%s, %s, %s, %s)",
-                       (cid, question_idx, answer, datetime.now()))
-        conn.commit()
+        cursor.execute("SELECT lesson_id, answer FROM questions WHERE language = %s AND level = %s", (language, level))
+        questions = cursor.fetchall()
+        return questions
     except mysql.connector.Error as err:
-        bot.send_message(cid, f"خطای درج پاسخ به پایگاه داده: {err}")
+        print( f"خطای درج پاسخ به پایگاه داده: {err}")
     finally:
-        if cursor is not None:
+        if cursor: 
             cursor.close()
-        if conn is not None:
+        if conn :
             conn.close()
+
 
 
 
@@ -171,29 +213,6 @@ def start_level_test(cid):
     user_answers[cid] = [] 
     user_data[cid]['current_question'] = 0  
     send_question(cid)
-
-def send_question(cid):
-    Cursor.execute("SELECT language, lesson_id, question_text, correct_answer FROM questions")
-    questions = Cursor.fetchall()
-    
-    for question_idx, question in enumerate(questions):
-        language, lesson_id, question_text, correct_answer = question
-        
-        question_file_id = lesson_id 
-
-        options = [
-            types.InlineKeyboardButton('A', callback_data=f'answer_{question_idx}_A'),
-            types.InlineKeyboardButton('B', callback_data=f'answer_{question_idx}_B'),
-            types.InlineKeyboardButton('C', callback_data=f'answer_{question_idx}_C'),
-            types.InlineKeyboardButton('D', callback_data=f'answer_{question_idx}_D')
-        ]
-        markup = InlineKeyboardMarkup([options])
-        
-        bot.send_photo(cid, question_file_id, caption=question_text, reply_markup=markup)
-        
-        if cid not in user_data:
-            user_data[cid] = {'current_question': 0}
-        user_data[cid]['current_question'] += 1
 
 @bot.callback_query_handler(func=lambda call: True)
 def handle_query(call):

@@ -78,9 +78,35 @@ data = {
                         ' BQACAgQAAxkBAAIDMWeadD0xZ-GKOSXDsim0JULhnVJcAAJ2GAACQYnZUI3Xr2OnZkc7NgQ',
                         ' BQACAgQAAxkBAAIDM2eadEFB4nNmteIk1XEKq2SbJxETAAJ3GAACQYnZUD7T1lytLa14NgQ',
                         ' BQACAgQAAxkBAAIDNWeadET3bnfm_mWNP9B4CZmReywkAAJ4GAACQYnZUCTQs1DL9JMaNgQ',
-                        ' BQACAgQAAxkBAAIDN2eadEXEut_gi9ovn73EsdM-JDLiAAJ5GAACQYnZUBozlg5YSDNgNgQ'],
-            'متوسط' : [],
-            'پیشرفته' : [],    
+                        ' BQACAgQAAxkBAAIDN2eadEXEut_gi9ovn73EsdM-JDLiAAJ5GAACQYnZUBozlg5YSDNgNgQ'
+                        ],
+
+            'متوسط' : ['BQACAgQAAxkBAAIKIWfYXpVTBDAnVS0AAdcis5On8cUqJQACsBYAAjP9wFLG4NwyMDXxSzYE',
+                        'BQACAgQAAxkBAAIKI2fYXqiA0-YXdhL31dAAAZvpd76kKQACshYAAjP9wFKaP0RWRc6xlzYE',
+                        'BQACAgQAAxkBAAIKJWfYXrD11m1UBDhIHgKKZyGtdUMxAAK0FgACM_3AUo8R0gi4Y1GwNgQ',
+                        'BQACAgQAAxkBAAIKJ2fYXropGWxuNX9FxA53nt1yiNnbAAK1FgACM_3AUiHuwogRfAtWNgQ',
+                        'BQACAgQAAxkBAAIKKWfYXr_RRFt3q5jTfH1jKbZaaMn5AAK2FgACM_3AUh-fh4NV0atoNgQ',
+                        'BQACAgQAAxkBAAIKK2fYXschRM7K7njsUBifqSOQRojxAAK3FgACM_3AUhXwaS5cf0JjNgQ',
+                        'BQACAgQAAxkBAAIKLWfYXtM6fLjSiUN8w9Chr5-v06EiAAK5FgACM_3AUkQI7OMZhQdZNgQ',
+                        'BQACAgQAAxkBAAIKL2fYXtXI3P5YeNGfSZBXYdq5rPhmAAK7FgACM_3AUqA9ETtTicLKNgQ',
+                        'BQACAgQAAxkBAAIKMWfYXt-nHav9ZvxvqosNwLV5cJEgAAK8FgACM_3AUksatkt-GO2oNgQ',
+                        'BQACAgQAAxkBAAIKM2fYXucrBFF5bcUmi3FmJtQp-R3mAAK9FgACM_3AUoR55tXHK_EMNgQ',
+                        'BQACAgQAAxkBAAIKNWfYXu9eGoSbtZihPEHKP6mm7lUJAAK_FgACM_3AUhp-2WKIXxqcNgQ',
+                        'BQACAgQAAxkBAAIKN2fYXvb4nNAKltTyJgsL30GXyHl5AALAFgACM_3AUnZecgI2g7EDNgQ',
+                        'BQACAgQAAxkBAAIKOWfYXvsM4DKMHlx3XMDsYmUE0hVzAALBFgACM_3AUiF9WlGrMjEhNgQ',
+                        'BQACAgQAAxkBAAIKO2fYXwELNmTE4czWtptTjfCpur7ZAALCFgACM_3AUnpJyLEq16Q8NgQ',
+                        'BQACAgQAAxkBAAIKPWfYXwlyLEPCUlME97PDy7cPqSMlAALDFgACM_3AUjpBNg7jM7aRNgQ',
+                        'BQACAgQAAxkBAAIKP2fYXw7lRJE6XhySkfoURXkrxQgbAALEFgACM_3AUp-JZ3ZzopIuNgQ',
+                        'BQACAgQAAxkBAAIKQWfYXxWzXmrOJyCYiFjO9ty2zGACAALGFgACM_3AUrWbiCnpB_ihNgQ',
+                        'BQACAgQAAxkBAAIKQ2fYXxrIj5LKgwuuZDNi7e4lEeVQAALHFgACM_3AUqvtvifbfdaoNgQ',
+                        'BQACAgQAAxkBAAIKRWfYXyCyDcaFd7y6jaBnB5Q_VyEEAALIFgACM_3AUvs5Zi8-VwKXNgQ',
+                        'BQACAgQAAxkBAAIKR2fYXyaKeNEwtts0_zulz7zTx2TXAALJFgACM_3AUjpCkyJ93s61NgQ',
+                        'BQACAgQAAxkBAAIKSWfYXytO07xVodGCpRj3bGhezy0BAALKFgACM_3AUs_FJrrJekVUNgQ'
+                         ],
+
+            'پیشرفته' : [
+                
+            ],    
         },
         'java' : {
             'مبتدی':[],
@@ -99,20 +125,6 @@ try:
     connection = mysql.connector.connect(**config)
     cursor = connection.cursor()
     print ("connected to MYSQL server successfully")
-
-    insert_question_query = """
-    INSERT INTO questions (language, lesson_id, question_text, correct_answer )
-    VALUES (%s, %s, %s, %s)
-    """
-    for language, images in data["question_images"].items():
-        correct_answers_list = data["correct_answers"].get(language, [])
-        for i, file_id in enumerate(images):
-            question_text = f"Question {i + 1} for {language}"  
-            answer = correct_answers_list[i] if i < len(correct_answers_list) else None
-            cursor.execute(insert_question_query, (language, file_id, question_text, answer))
-
-    connection.commit()
-    print("Questions inserted successfully!")
 
     create_lessons_table = """
     CREATE TABLE IF NOT EXISTS lessons (
@@ -247,10 +259,13 @@ try:
     connection.commit()
     print("Question inserted successfully!")
 
+   
+
+
 except mysql.connector.Error as err:
     print(f"Error: {err}")
 finally:
     if connection.is_connected():
         cursor.close()
-       # connection.close()
-        #print("Connection to MySQL closed.")
+        connection.close()
+        print("Connection to MySQL closed.")
